@@ -1,0 +1,27 @@
+import rospy
+import rosbag
+import random
+from geometry_msgs.msg import Twist
+
+def add_noise_and_publish():
+    rospy.init_node('noisy_velocity_publisher', anonymous=True)
+    input_bag_path = "2023-08-27-17-22-31.bag"
+    output_topic = "/turtlebot3/noisy_velocity"
+    
+    noisy_velocity_publisher = rospy.Publisher(output_topic, Twist, queue_size=10)
+    
+    bag = rosbag.Bag("2023-08-27-17-22-31.bag", 'r')
+    for topic, msg, t in bag.read_messages(topics=['/turtlebot3/velocity']):
+        noisy_msg = Twist()
+        noisy_msg.linear.x = msg.linear.x + random.gauss(0, 0.1)  # Add Gaussian noise
+        noisy_velocity_publisher.publish(noisy_msg)
+        rospy.loginfo("Noisy velocity published: %s", noisy_msg)
+        rospy.sleep(0.1)
+    
+    bag.close()
+
+if __name__ == '__main__':
+    try:
+        add_noise_and_publish()
+    except rospy.ROSInterruptException:
+        pass
